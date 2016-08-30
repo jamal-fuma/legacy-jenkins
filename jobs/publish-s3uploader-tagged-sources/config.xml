@@ -1,0 +1,91 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>GPL command line tool for processing of nutritional data.</description>
+  <keepDependencies>true</keepDependencies>
+  <properties>
+    <org.jenkinsci.plugins.buildcontextcapture.BuildContextJobProperty plugin="buildcontext-capture@0.5">
+      <on>false</on>
+    </org.jenkinsci.plugins.buildcontextcapture.BuildContextJobProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>SOURCE_VERSION</name>
+          <description>Which version of the code to test</description>
+          <defaultValue>http://localhost:8080/job/acquire-s3uploader-tagged-sources/lastSuccessfulBuild/artifact/build/version.txt</defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <org.jvnet.hudson.plugins.shelveproject.ShelveProjectProperty plugin="shelve-project-plugin@1.3"/>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers class="vector">
+    <org.jenkinsci.plugins.buildresulttrigger.BuildResultTrigger plugin="buildresult-trigger@0.6">
+      <spec></spec>
+      <jobsInfo>
+        <org.jenkinsci.plugins.buildresulttrigger.model.BuildResultTriggerInfo>
+          <jobName>acquire-s3uploader-tagged-sources</jobName>
+          <checkedResults>
+            <org.jenkinsci.plugins.buildresulttrigger.model.CheckedResult>
+              <result>
+                <name>SUCCESS</name>
+                <ordinal>0</ordinal>
+                <color>BLUE</color>
+              </result>
+            </org.jenkinsci.plugins.buildresulttrigger.model.CheckedResult>
+          </checkedResults>
+        </org.jenkinsci.plugins.buildresulttrigger.model.BuildResultTriggerInfo>
+      </jobsInfo>
+    </org.jenkinsci.plugins.buildresulttrigger.BuildResultTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>pwd
+
+curl -s ${SOURCE_VERSION} &gt; version.txt
+SOURCE_LOCATION=&quot;${SOURCE_VERSION/version.txt/}`cat version.txt`.tar.gz&quot;
+
+
+curl -s ${SOURCE_LOCATION} &gt; source_tarball.tgz
+
+mkdir s3uploader;
+tar --strip=1 -xzf source_tarball.tgz -C s3uploader
+rm source_tarball.tgz
+
+tar -czf s3uploader-sources.tar.gz s3uploader 
+rm -rvf s3uploader
+
+cat version.txt</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>s3uploader-sources.tar.gz,version.txt</artifacts>
+      <latestOnly>false</latestOnly>
+    </hudson.tasks.ArtifactArchiver>
+    <hudson.tasks.Fingerprinter>
+      <targets></targets>
+      <recordBuildArtifacts>true</recordBuildArtifacts>
+    </hudson.tasks.Fingerprinter>
+    <hudson.plugins.descriptionsetter.DescriptionSetterPublisher plugin="description-setter@1.8">
+      <regexp>(s3uploader-0.*)</regexp>
+      <regexpForFailed></regexpForFailed>
+      <setForMatrix>false</setForMatrix>
+    </hudson.plugins.descriptionsetter.DescriptionSetterPublisher>
+    <hudson.plugins.ws__cleanup.WsCleanup plugin="ws-cleanup@0.4"/>
+    <hudson.tasks.BuildTrigger>
+      <childProjects>compile-s3uploader-sources</childProjects>
+      <threshold>
+        <name>SUCCESS</name>
+        <ordinal>0</ordinal>
+        <color>BLUE</color>
+      </threshold>
+    </hudson.tasks.BuildTrigger>
+  </publishers>
+  <buildWrappers/>
+</project>
