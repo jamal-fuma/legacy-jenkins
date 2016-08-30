@@ -1,0 +1,86 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>GPL command line tool for processing of nutritional data.</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>SOURCE_LOCATION</name>
+          <description>Where the binaries to test live
+</description>
+          <defaultValue>http://localhost:8080/job/publish-epic-food-frequency-binaries/lastSuccessfulBuild/artifact/epic-food-frequency-linux-binaries.tar.gz</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>GREP_PATTERN</name>
+          <description>a regexp for assert absence of a message from the log file using grep</description>
+          <defaultValue>Error: Config file missing</defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <org.jvnet.hudson.plugins.shelveproject.ShelveProjectProperty/>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers class="vector"/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>set +e
+rm -rf _inst match.txt errors.log version.txt;
+
+mkdir _inst;
+cd _inst;
+wget -nv ${SOURCE_LOCATION} -O - | tee epic-food-frequency-binaries.tar.gz | tar -xz --strip=1 
+
+bin/epic_ffq -V 2&gt;&amp;1 | tee ../version.txt
+bin/epic_ffq -f `pwd`/etc/epic-food-frequency/conf/client.conf 2&gt; ../errors.log || true;
+
+matches=`grep -c &quot;${GREP_PATTERN}&quot; ../errors.log`;
+status=0;
+if [ ${matches} -eq 0 ]; then
+    echo &quot;${JOB_NAME}&quot; &gt; ../match.txt;
+    echo &quot;Pattern not matched: No error detected in `cat ../version.txt | grep Epic_Client`&quot; &gt; ../match.txt;
+else
+   echo &quot;${JOB_NAME}&quot; &gt; ../match.txt; 
+   echo &quot;Pattern matched: error detected in `cat ../version.txt | grep Epic_Client`&quot; &gt;&gt; ../match.txt;
+   status=1;
+fi
+cd ../
+cat version.txt
+rm -rf _inst
+exit ${status};
+
+</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>version.txt,errors.log,match.txt</artifacts>
+      <latestOnly>false</latestOnly>
+    </hudson.tasks.ArtifactArchiver>
+    <hudson.tasks.BuildTrigger>
+      <childProjects>test-epic-food-frequency-120-latest-format</childProjects>
+      <threshold>
+        <name>SUCCESS</name>
+        <ordinal>0</ordinal>
+        <color>BLUE</color>
+      </threshold>
+    </hudson.tasks.BuildTrigger>
+    <hudson.tasks.Fingerprinter>
+      <targets></targets>
+      <recordBuildArtifacts>true</recordBuildArtifacts>
+    </hudson.tasks.Fingerprinter>
+    <hudson.plugins.descriptionsetter.DescriptionSetterPublisher>
+      <regexp>(Epic_Client.*)</regexp>
+      <regexpForFailed></regexpForFailed>
+      <setForMatrix>false</setForMatrix>
+    </hudson.plugins.descriptionsetter.DescriptionSetterPublisher>
+    <hudson.plugins.ws__cleanup.WsCleanup/>
+  </publishers>
+  <buildWrappers/>
+</project>
