@@ -1,0 +1,57 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>GPL command line tool for processing of nutritional data.</description>
+  <logRotator>
+    <daysToKeep>-1</daysToKeep>
+    <numToKeep>1</numToKeep>
+    <artifactDaysToKeep>-1</artifactDaysToKeep>
+    <artifactNumToKeep>-1</artifactNumToKeep>
+  </logRotator>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <org.jvnet.hudson.plugins.shelveproject.ShelveProjectProperty/>
+  </properties>
+  <scm class="hudson.plugins.URLSCM.URLSCM">
+    <urls>
+      <hudson.plugins.URLSCM.URLSCM_-URLTuple>
+        <urlString>http://localhost:8080/view/YourPaintings/job/yourpaintings-1-acquire-sources/lastSuccessfulBuild/artifact/*zip*/archive.zip</urlString>
+      </hudson.plugins.URLSCM.URLSCM_-URLTuple>
+    </urls>
+    <clearWorkspace>true</clearWorkspace>
+  </scm>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers class="vector"/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>alias ber=&quot;bundle exec ruby&quot;
+unzip archive.zip;
+cd archive/yourpaintings;
+unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
+ber -Igems/autotest_path/lib features/support/test/dao/test_artist_dao.rb | tee ../.../results.log | ber -lne &apos;Process.exit($3.to_i + $4.to_i) if /(\d+) tests, (\d+) assertions, (\d+) failures, (\d+) errors/.match($_);&apos;</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.tasks.test.AggregatedTestResultPublisher>
+      <includeFailedBuilds>true</includeFailedBuilds>
+    </hudson.tasks.test.AggregatedTestResultPublisher>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>results.log</artifacts>
+      <latestOnly>false</latestOnly>
+    </hudson.tasks.ArtifactArchiver>
+    <hudson.tasks.Fingerprinter>
+      <targets></targets>
+      <recordBuildArtifacts>false</recordBuildArtifacts>
+    </hudson.tasks.Fingerprinter>
+    <hudson.tasks.Mailer>
+      <recipients>jamal.natour@bbc.co.uk</recipients>
+      <dontNotifyEveryUnstableBuild>false</dontNotifyEveryUnstableBuild>
+      <sendToIndividuals>false</sendToIndividuals>
+    </hudson.tasks.Mailer>
+  </publishers>
+  <buildWrappers/>
+</project>
