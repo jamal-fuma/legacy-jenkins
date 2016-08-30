@@ -1,0 +1,120 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>Publish Coverage reports for features</description>
+  <logRotator>
+    <daysToKeep>-1</daysToKeep>
+    <numToKeep>1</numToKeep>
+    <artifactDaysToKeep>-1</artifactDaysToKeep>
+    <artifactNumToKeep>-1</artifactNumToKeep>
+  </logRotator>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <org.jenkinsci.plugins.buildcontextcapture.BuildContextJobProperty>
+      <on>false</on>
+    </org.jenkinsci.plugins.buildcontextcapture.BuildContextJobProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>FEATURES</name>
+          <description></description>
+          <defaultValue>FEATURE=&apos;features/guided_tours_page.feature&apos;</defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <org.jvnet.hudson.plugins.shelveproject.ShelveProjectProperty/>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers class="vector">
+    <org.jenkinsci.plugins.buildresulttrigger.BuildResultTrigger>
+      <spec></spec>
+      <jobsInfo>
+        <org.jenkinsci.plugins.buildresulttrigger.model.BuildResultTriggerInfo>
+          <jobName>playground-1-acquire-sources</jobName>
+          <checkedResults>
+            <org.jenkinsci.plugins.buildresulttrigger.model.CheckedResult>
+              <result>
+                <name>SUCCESS</name>
+                <ordinal>0</ordinal>
+                <color>BLUE</color>
+              </result>
+            </org.jenkinsci.plugins.buildresulttrigger.model.CheckedResult>
+          </checkedResults>
+        </org.jenkinsci.plugins.buildresulttrigger.model.BuildResultTriggerInfo>
+      </jobsInfo>
+    </org.jenkinsci.plugins.buildresulttrigger.BuildResultTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>unset HTTP_PROXY;
+unset HTTPS_PROXY;
+export PATH=&quot;vendor/bin:${PATH}&quot;
+ln -sv ./archive/yourpaintings ./yourpaintings
+cd yourpaintings;
+
+bundle install --path=./vendor --binstubs=./vendor/bin;
+bundle exec rake &quot;${FEATURES}&quot; features_test --trace || echo &quot;rake failed build&quot;;
+</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.tasks.test.AggregatedTestResultPublisher>
+      <includeFailedBuilds>true</includeFailedBuilds>
+    </hudson.tasks.test.AggregatedTestResultPublisher>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>yourpaintings/tmp/**</artifacts>
+      <latestOnly>false</latestOnly>
+    </hudson.tasks.ArtifactArchiver>
+    <jenkins.plugins.displayupstreamchanges.DisplayUpstreamChangesRecorder/>
+    <hudson.plugins.rubyMetrics.rcov.RcovPublisher>
+      <reportDir>yourpaintings/tmp/doc/coverage</reportDir>
+      <targets>
+        <hudson.plugins.rubyMetrics.rcov.model.MetricTarget>
+          <metric>TOTAL_COVERAGE</metric>
+          <healthy>80</healthy>
+          <unhealthy>0</unhealthy>
+          <unstable>0</unstable>
+        </hudson.plugins.rubyMetrics.rcov.model.MetricTarget>
+        <hudson.plugins.rubyMetrics.rcov.model.MetricTarget>
+          <metric>CODE_COVERAGE</metric>
+          <healthy>80</healthy>
+          <unhealthy>0</unhealthy>
+          <unstable>0</unstable>
+        </hudson.plugins.rubyMetrics.rcov.model.MetricTarget>
+      </targets>
+    </hudson.plugins.rubyMetrics.rcov.RcovPublisher>
+    <hudson.plugins.labeledgroupedtests.LabeledGroupedTestArchiver>
+      <configs>
+        <hudson.plugins.labeledgroupedtests.LabeledTestGroupConfiguration>
+          <parserClassName>hudson.tasks.junit.JUnitParser</parserClassName>
+          <testResultFileMask>yourpaintings/tmp/log/*.xml</testResultFileMask>
+          <label>unit</label>
+        </hudson.plugins.labeledgroupedtests.LabeledTestGroupConfiguration>
+      </configs>
+    </hudson.plugins.labeledgroupedtests.LabeledGroupedTestArchiver>
+    <hudson.tasks.Fingerprinter>
+      <targets></targets>
+      <recordBuildArtifacts>true</recordBuildArtifacts>
+    </hudson.tasks.Fingerprinter>
+    <hudson.plugins.cigame.GamePublisher/>
+    <hudson.tasks.Mailer>
+      <recipients>jamal.natour@bbc.co.uk</recipients>
+      <dontNotifyEveryUnstableBuild>false</dontNotifyEveryUnstableBuild>
+      <sendToIndividuals>false</sendToIndividuals>
+    </hudson.tasks.Mailer>
+  </publishers>
+  <buildWrappers>
+    <hpi.CopyDataToWorkspacePlugin>
+      <folderPath>jobs/playground-1-acquire-sources/lastSuccessful</folderPath>
+      <makeFilesExecutable>false</makeFilesExecutable>
+      <deleteFilesAfterBuild>false</deleteFilesAfterBuild>
+    </hpi.CopyDataToWorkspacePlugin>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup/>
+    <org.jenkinsci.plugins.builduser.BuildUser/>
+  </buildWrappers>
+</project>
