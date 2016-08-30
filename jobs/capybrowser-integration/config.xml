@@ -1,0 +1,155 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>GPL command line tool for processing of nutritional data.</description>
+  <logRotator>
+    <daysToKeep>-1</daysToKeep>
+    <numToKeep>1</numToKeep>
+    <artifactDaysToKeep>-1</artifactDaysToKeep>
+    <artifactNumToKeep>-1</artifactNumToKeep>
+  </logRotator>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <org.jenkinsci.plugins.buildcontextcapture.BuildContextJobProperty>
+      <on>true</on>
+      <types>
+        <org.jenkinsci.plugins.buildcontextcapture.type.impl.EnvVarsType/>
+        <org.jenkinsci.plugins.buildcontextcapture.type.impl.BuildTimeType/>
+      </types>
+    </org.jenkinsci.plugins.buildcontextcapture.BuildContextJobProperty>
+    <org.jenkinsci.plugins.dryrun.DryRunJobProperty>
+      <on>true</on>
+      <enableRunListeners>true</enableRunListeners>
+      <enableSCM>true</enableSCM>
+      <enableTriggers>true</enableTriggers>
+      <enableBuildWrappers>true</enableBuildWrappers>
+      <enableBuilders>true</enableBuilders>
+      <enablePublishers>true</enablePublishers>
+    </org.jenkinsci.plugins.dryrun.DryRunJobProperty>
+    <org.jvnet.hudson.plugins.shelveproject.ShelveProjectProperty/>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <name>origin</name>
+        <refspec>+refs/heads/*:refs/remotes/origin/*</refspec>
+        <url>/Users/me/workspace/yp_repo/integration</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>topic_branch</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <disableSubmodules>false</disableSubmodules>
+    <recursiveSubmodules>false</recursiveSubmodules>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <authorOrCommitter>false</authorOrCommitter>
+    <clean>false</clean>
+    <wipeOutWorkspace>true</wipeOutWorkspace>
+    <pruneBranches>false</pruneBranches>
+    <remotePoll>false</remotePoll>
+    <ignoreNotifyCommit>false</ignoreNotifyCommit>
+    <buildChooser class="hudson.plugins.git.util.DefaultBuildChooser"/>
+    <gitTool>Default</gitTool>
+    <submoduleCfg class="list"/>
+    <relativeTargetDir>capybrowser</relativeTargetDir>
+    <reference></reference>
+    <excludedRegions></excludedRegions>
+    <excludedUsers></excludedUsers>
+    <gitConfigName></gitConfigName>
+    <gitConfigEmail></gitConfigEmail>
+    <skipTag>false</skipTag>
+    <includedRegions></includedRegions>
+    <scmName></scmName>
+  </scm>
+  <scmCheckoutRetryCount>0</scmCheckoutRetryCount>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers class="vector">
+    <hudson.triggers.SCMTrigger>
+      <spec>*/5 * * * *</spec>
+    </hudson.triggers.SCMTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>cd capybrowser
+unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
+
+bin/bootstrap.sh
+
+# Run Cucumber
+rake features
+# remove the symlinked gem cache
+rm tmp/vendor/cache
+rake gems:build</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>capybrowser/tmp/doc/**, capybrowser/vendor/cache/capybrowser*.gem</artifacts>
+      <latestOnly>false</latestOnly>
+    </hudson.tasks.ArtifactArchiver>
+    <jenkins.plugins.displayupstreamchanges.DisplayUpstreamChangesRecorder/>
+    <htmlpublisher.HtmlPublisher>
+      <reportTargets>
+        <htmlpublisher.HtmlPublisherTarget>
+          <reportName>HTML Cucumber Feature Report</reportName>
+          <reportDir>capybrowser/tmp/doc/cucumber/html</reportDir>
+          <reportFiles>report.html</reportFiles>
+          <keepAll>false</keepAll>
+          <wrapperName>htmlpublisher-wrapper.html</wrapperName>
+        </htmlpublisher.HtmlPublisherTarget>
+        <htmlpublisher.HtmlPublisherTarget>
+          <reportName>HTML Coverage Report</reportName>
+          <reportDir>capybrowser/tmp/doc/coverage</reportDir>
+          <reportFiles>index.html</reportFiles>
+          <keepAll>false</keepAll>
+          <wrapperName>htmlpublisher-wrapper.html</wrapperName>
+        </htmlpublisher.HtmlPublisherTarget>
+      </reportTargets>
+    </htmlpublisher.HtmlPublisher>
+    <hudson.plugins.rubyMetrics.rcov.RcovPublisher>
+      <reportDir>capybrowser/tmp/doc/coverage</reportDir>
+      <targets>
+        <hudson.plugins.rubyMetrics.rcov.model.MetricTarget>
+          <metric>TOTAL_COVERAGE</metric>
+          <healthy>80</healthy>
+          <unhealthy>0</unhealthy>
+          <unstable>0</unstable>
+        </hudson.plugins.rubyMetrics.rcov.model.MetricTarget>
+        <hudson.plugins.rubyMetrics.rcov.model.MetricTarget>
+          <metric>CODE_COVERAGE</metric>
+          <healthy>80</healthy>
+          <unhealthy>0</unhealthy>
+          <unstable>0</unstable>
+        </hudson.plugins.rubyMetrics.rcov.model.MetricTarget>
+      </targets>
+    </hudson.plugins.rubyMetrics.rcov.RcovPublisher>
+    <hudson.plugins.labeledgroupedtests.LabeledGroupedTestArchiver>
+      <configs>
+        <hudson.plugins.labeledgroupedtests.LabeledTestGroupConfiguration>
+          <parserClassName>hudson.tasks.junit.JUnitParser</parserClassName>
+          <testResultFileMask>capybrowser/tmp/doc/tests/junit/*.xml, capybrowser/tmp/doc/cucumber/junit/*.xml</testResultFileMask>
+          <label>unit</label>
+        </hudson.plugins.labeledgroupedtests.LabeledTestGroupConfiguration>
+      </configs>
+    </hudson.plugins.labeledgroupedtests.LabeledGroupedTestArchiver>
+    <hudson.tasks.Fingerprinter>
+      <targets></targets>
+      <recordBuildArtifacts>true</recordBuildArtifacts>
+    </hudson.tasks.Fingerprinter>
+    <hudson.plugins.git.GitPublisher>
+      <configVersion>2</configVersion>
+      <pushMerge>false</pushMerge>
+      <pushOnlyIfSuccess>false</pushOnlyIfSuccess>
+    </hudson.plugins.git.GitPublisher>
+    <hudson.plugins.cigame.GamePublisher/>
+    <hudson.plugins.ws__cleanup.WsCleanup/>
+  </publishers>
+  <buildWrappers/>
+</project>
