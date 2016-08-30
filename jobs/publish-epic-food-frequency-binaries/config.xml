@@ -1,0 +1,72 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>GPL command line tool for processing of nutritional data.</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>SOURCE_LOCATION</name>
+          <description>Where the binaries to test live</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>http://localhost:8080/job/compile-epic-food-frequency-sources/lastSuccessfulBuild/artifact/build/epic-food-frequency-binaries.tar.gz</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>VERSION_INFO</name>
+          <description>Where the version information for the associated tarball live</description>
+          <defaultValue>http://localhost:8080/job/compile-epic-food-frequency-sources/lastSuccessfulBuild/artifact/build/version.txt</defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <org.jvnet.hudson.plugins.shelveproject.ShelveProjectProperty/>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers class="vector"/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>        rm -fv *.tar* 
+        wget -nv ${SOURCE_LOCATION} -O epic-food-frequency-linux-binaries.tar.gz;
+        wget -nv ${VERSION_INFO} -O version.txt;
+cat version.txt
+</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.tasks.test.AggregatedTestResultPublisher>
+      <includeFailedBuilds>false</includeFailedBuilds>
+    </hudson.tasks.test.AggregatedTestResultPublisher>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>epic-food-frequency-linux-binaries.tar.gz,version.txt</artifacts>
+      <latestOnly>false</latestOnly>
+    </hudson.tasks.ArtifactArchiver>
+    <hudson.tasks.BuildTrigger>
+      <childProjects>test-epic-food-frequency-binaries</childProjects>
+      <threshold>
+        <name>SUCCESS</name>
+        <ordinal>0</ordinal>
+        <color>BLUE</color>
+      </threshold>
+    </hudson.tasks.BuildTrigger>
+    <hudson.tasks.Fingerprinter>
+      <targets></targets>
+      <recordBuildArtifacts>true</recordBuildArtifacts>
+    </hudson.tasks.Fingerprinter>
+    <hudson.plugins.descriptionsetter.DescriptionSetterPublisher>
+      <regexp>(epic-food-frequency-0.*)</regexp>
+      <regexpForFailed></regexpForFailed>
+      <setForMatrix>false</setForMatrix>
+    </hudson.plugins.descriptionsetter.DescriptionSetterPublisher>
+  </publishers>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup/>
+  </buildWrappers>
+</project>
