@@ -1,0 +1,116 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>GPL command line tool for processing of nutritional data.</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>REPORT_TYPE</name>
+          <description>Type of report to generate</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>spreadsheet</string>
+              <string>foods</string>
+              <string>meals</string>
+              <string>nutrients</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>SOURCE_LOCATION</name>
+          <description>location of binaries to test</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>http://localhost:8080/job/publish-epic-food-frequency-binaries/lastSuccessfulBuild/artifact/epic-food-frequency-linux-binaries.tar.gz</string>
+              <string>http://localhost:8080/job/publish-epic-food-frequency-binaries/57/artifact/epic-food-frequency-linux-binaries.tar.gz</string>
+              <string>http://localhost:8080/job/publish-epic-food-frequency-binaries/58/artifact/epic-food-frequency-linux-binaries.tar.gz</string>
+              <string>http://localhost:8080/job/publish-epic-food-frequency-binaries/59/artifact/epic-food-frequency-linux-binaries.tar.gz</string>
+              <string>http://localhost:8080/job/publish-epic-food-frequency-binaries/60/artifact/epic-food-frequency-linux-binaries.tar.gz</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <org.jvnet.hudson.plugins.shelveproject.ShelveProjectProperty/>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM">
+    <configVersion>1</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <name>origin</name>
+        <refspec>+refs/heads/*:refs/remotes/origin/*</refspec>
+        <url>ssh://git@192.168.1.7:50022/home/git/repo/epic-test-assets.git</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>master</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <disableSubmodules>false</disableSubmodules>
+    <recursiveSubmodules>false</recursiveSubmodules>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <authorOrCommitter>false</authorOrCommitter>
+    <clean>false</clean>
+    <wipeOutWorkspace>false</wipeOutWorkspace>
+    <pruneBranches>false</pruneBranches>
+    <remotePoll>false</remotePoll>
+    <ignoreNotifyCommit>false</ignoreNotifyCommit>
+    <buildChooser class="hudson.plugins.git.util.DefaultBuildChooser"/>
+    <gitTool>Default</gitTool>
+    <submoduleCfg class="list"/>
+    <relativeTargetDir></relativeTargetDir>
+    <excludedRegions></excludedRegions>
+    <excludedUsers></excludedUsers>
+    <skipTag>false</skipTag>
+  </scm>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers class="vector"/>
+  <concurrentBuild>true</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>rm -rf _inst env.txt;
+
+env &gt; env.txt;
+
+tests/test-sample_input_51_of_25352_lines.sh 
+
+
+mv output.csv expected.csv
+sed -e &apos;s/.\{20\}//&apos; log.log &gt; sample.log 
+
+mkdir _inst;
+cd _inst;
+wget -nv ${SOURCE_LOCATION} -O - | tar -xz --strip=1 
+
+bin/epic_ffq -V 2&gt;&amp;1 | tee ../version.txt
+bin/epic_ffq -s ${REPORT_TYPE} -i ../input.csv -o ../output.csv -f `pwd`/etc/epic-food-frequency/conf/client.conf -l ../errors.log;
+
+diff -rNup ../expected.csv ../output.csv &gt; ../output_diff.txt
+sed -e &apos;s/.\{20\}//&apos; ../errors.log -i;
+diff -Nup ../sample.log ../errors.log &gt; ../log_diff.txt</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>errors.log,sample.log,input.csv,expected.csv,output.csv,version.txt,env.txt,log_diff.txt,output_diff.txt</artifacts>
+      <latestOnly>false</latestOnly>
+    </hudson.tasks.ArtifactArchiver>
+    <hudson.tasks.Fingerprinter>
+      <targets></targets>
+      <recordBuildArtifacts>true</recordBuildArtifacts>
+    </hudson.tasks.Fingerprinter>
+    <hudson.plugins.descriptionsetter.DescriptionSetterPublisher>
+      <regexp>(Epic_Client.*)</regexp>
+      <regexpForFailed></regexpForFailed>
+      <setForMatrix>false</setForMatrix>
+    </hudson.plugins.descriptionsetter.DescriptionSetterPublisher>
+    <hudson.plugins.ws__cleanup.WsCleanup/>
+  </publishers>
+  <buildWrappers/>
+</project>
