@@ -1,0 +1,70 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>GPL command line tool for processing of nutritional data.</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>SOURCE_VERSION</name>
+          <description>Which version of the code to test</description>
+          <defaultValue>http://localhost:8080/job/acquire-epic-food-frequency-tagged-sources/lastSuccessfulBuild/artifact/version.txt</defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <org.jvnet.hudson.plugins.shelveproject.ShelveProjectProperty/>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers class="vector"/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>pwd
+
+wget ${SOURCE_VERSION} -O version.txt
+SOURCE_LOCATION=&quot;${SOURCE_VERSION/version.txt/}`cat version.txt`.tar.gz&quot;
+
+
+wget -nv ${SOURCE_LOCATION} -O source_tarball.tgz
+
+mkdir epic-food-frequency;
+tar --strip=1 -xzf source_tarball.tgz -C epic-food-frequency
+rm source_tarball.tgz
+
+tar -czf epic-food-frequency-sources.tar.gz epic-food-frequency 
+rm -rvf epic-food-frequency
+
+cat version.txt</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>epic-food-frequency-sources.tar.gz,version.txt</artifacts>
+      <latestOnly>false</latestOnly>
+    </hudson.tasks.ArtifactArchiver>
+    <hudson.tasks.BuildTrigger>
+      <childProjects>compile-epic-food-frequency-sources,epic-food-frequency-windows</childProjects>
+      <threshold>
+        <name>SUCCESS</name>
+        <ordinal>0</ordinal>
+        <color>BLUE</color>
+      </threshold>
+    </hudson.tasks.BuildTrigger>
+    <hudson.tasks.Fingerprinter>
+      <targets></targets>
+      <recordBuildArtifacts>true</recordBuildArtifacts>
+    </hudson.tasks.Fingerprinter>
+    <hudson.plugins.descriptionsetter.DescriptionSetterPublisher>
+      <regexp>(epic-food-frequency-0.*)</regexp>
+      <regexpForFailed></regexpForFailed>
+      <setForMatrix>false</setForMatrix>
+    </hudson.plugins.descriptionsetter.DescriptionSetterPublisher>
+    <hudson.plugins.ws__cleanup.WsCleanup/>
+  </publishers>
+  <buildWrappers/>
+</project>
